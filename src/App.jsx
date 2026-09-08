@@ -2,9 +2,7 @@ import { useState } from 'react'
 import SearchForm from './components/SearchForm'
 import Results from './components/Results'
 
-const API_KEY = '095446eb10msh8e8c3810cfea46cp12d73bjsn5d422053c1d2'
-const API_HOST = 'movie-tv-music-search-and-download.p.rapidapi.com'
-const API_BASE = 'https://movie-tv-music-search-and-download.p.rapidapi.com/search/torrent'
+const YTS_API = 'https://yts.mx/api/v2/list_movies.json'
 
 export default function App() {
   const [results, setResults] = useState([])
@@ -23,24 +21,18 @@ export default function App() {
 
     try {
       const params = new URLSearchParams({
-        keywords: `${name} ${year}`.trim(),
-        quantity: '20'
+        query_term: `${name} ${year}`.trim(),
+        limit: '20',
+        quality: 'all',
+        sort_by: 'date_added',
+        order_by: 'desc'
       })
 
-      const res = await fetch(`${API_BASE}?${params}`, {
-        headers: {
-          'X-RapidAPI-Key': API_KEY,
-          'X-RapidAPI-Host': API_HOST
-        }
-      })
-
+      const res = await fetch(`${YTS_API}?${params}`)
       const data = await res.json()
 
-      if (data.code === '200' && data.result) {
-        setResults(data.result)
-        if (data.result.length === 0) {
-          setError('No results found. Try a different search.')
-        }
+      if (data.status === 'ok' && data.data && data.data.movie_count > 0) {
+        setResults(data.data.movies)
       } else {
         setError('No results found. Try a different search.')
       }
@@ -59,7 +51,7 @@ export default function App() {
 
       <section className="hero">
         <h1>Find & Download Movies</h1>
-        <p>Search for any movie and get torrent links instantly</p>
+        <p>Search for any movie and get torrent download links</p>
       </section>
 
       <div className="search-container">
@@ -69,7 +61,7 @@ export default function App() {
       {loading && (
         <div className="loading">
           <div className="spinner"></div>
-          <div className="loading-text">Searching torrents...</div>
+          <div className="loading-text">Searching movies...</div>
         </div>
       )}
 
