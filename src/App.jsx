@@ -2,7 +2,7 @@ import { useState } from 'react'
 import SearchForm from './components/SearchForm'
 import Results from './components/Results'
 
-const YTS_API = 'https://yts.mx/api/v2/list_movies.json'
+const API_BASE = '/api/search'
 
 export default function App() {
   const [results, setResults] = useState([])
@@ -20,15 +20,7 @@ export default function App() {
     setQuery(`${name}${year ? ' ' + year : ''}`)
 
     try {
-      const params = new URLSearchParams({
-        query_term: `${name} ${year}`.trim(),
-        limit: '20',
-        quality: 'all',
-        sort_by: 'date_added',
-        order_by: 'desc'
-      })
-
-      const res = await fetch(`${YTS_API}?${params}`)
+      const res = await fetch(`${API_BASE}?q=${encodeURIComponent(`${name} ${year}`.trim())}`)
       const data = await res.json()
 
       if (data.status === 'ok' && data.data && data.data.movie_count > 0) {
