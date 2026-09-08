@@ -2,9 +2,9 @@ import { useState } from 'react'
 import SearchForm from './components/SearchForm'
 import Results from './components/Results'
 
-const API_KEY = '388f6aeb7emsh39b7c961a6b384dp16c43ejsnc7055ae371dd'
-const API_HOST = 'filepursuit.p.rapidapi.com'
-const API_BASE = 'https://filepursuit.p.rapidapi.com/'
+const API_KEY = '095446eb10msh8e8c3810cfea46cp12d73bjsn5d422053c1d2'
+const API_HOST = 'movie-tv-music-search-and-download.p.rapidapi.com'
+const API_BASE = 'https://movie-tv-music-search-and-download.p.rapidapi.com/search/torrent'
 
 export default function App() {
   const [results, setResults] = useState([])
@@ -23,8 +23,8 @@ export default function App() {
 
     try {
       const params = new URLSearchParams({
-        q: `${name} ${year}`.trim(),
-        type: 'video'
+        keywords: `${name} ${year}`.trim(),
+        quantity: '20'
       })
 
       const res = await fetch(`${API_BASE}?${params}`, {
@@ -36,13 +36,13 @@ export default function App() {
 
       const data = await res.json()
 
-      if (data.status === 'success' && data.files_found) {
-        setResults(data.files_found)
-        if (data.files_found.length === 0) {
-          setError('No files found. Try a different search.')
+      if (data.code === '200' && data.result) {
+        setResults(data.result)
+        if (data.result.length === 0) {
+          setError('No results found. Try a different search.')
         }
       } else {
-        setError('No files found. Try a different search.')
+        setError('No results found. Try a different search.')
       }
     } catch (err) {
       setError('Something went wrong. Please try again.')
@@ -59,7 +59,7 @@ export default function App() {
 
       <section className="hero">
         <h1>Find & Download Movies</h1>
-        <p>Search for any movie and get download links instantly</p>
+        <p>Search for any movie and get torrent links instantly</p>
       </section>
 
       <div className="search-container">
@@ -69,7 +69,7 @@ export default function App() {
       {loading && (
         <div className="loading">
           <div className="spinner"></div>
-          <div className="loading-text">Searching for files...</div>
+          <div className="loading-text">Searching torrents...</div>
         </div>
       )}
 
@@ -96,12 +96,12 @@ export default function App() {
         <div className="empty">
           <div className="empty-icon">🎬</div>
           <h3>Start searching</h3>
-          <p>Enter a movie name to find download links</p>
+          <p>Enter a movie name to find torrent download links</p>
         </div>
       )}
 
       <footer className="footer">
-        Movie4u — Free movie file search engine
+        Movie4u — Free movie torrent search engine
       </footer>
     </div>
   )
