@@ -23,8 +23,17 @@ export default function App() {
       const res = await fetch(`${API_BASE}?q=${encodeURIComponent(`${name} ${year}`.trim())}`)
       const data = await res.json()
 
-      if (data.status === 'ok' && data.data && data.data.movie_count > 0) {
-        setResults(data.data.movies)
+      let movies = []
+      if (Array.isArray(data)) {
+        movies = data
+      } else if (data && Array.isArray(data.data)) {
+        movies = data.data
+      } else if (data && data.results && Array.isArray(data.results)) {
+        movies = data.results
+      }
+
+      if (movies.length > 0) {
+        setResults(movies)
       } else {
         setError('No results found. Try a different search.')
       }
