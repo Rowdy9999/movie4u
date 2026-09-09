@@ -90,7 +90,7 @@ export default function WatchPage({ movieId, onNavigate }) {
 
       <div className="player-container">
         <iframe
-          src={`https://moviesapi.to/movie/${movieId}`}
+          src={`https://vidsrc.cc/v2/embed/movie/${movieId}`}
           className="player-iframe"
           frameBorder="0"
           allowFullScreen
