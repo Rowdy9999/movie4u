@@ -18,12 +18,11 @@ export default function WatchPage({ movieId, onNavigate }) {
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/search?q=${movieId}`)
+    fetch(`/api/movie/${movieId}`)
       .then(r => r.json())
       .then(data => {
-        if (data.results && data.results.length > 0) {
-          const found = data.results.find(m => String(m.id) === String(movieId))
-          setMovie(found || data.results[0])
+        if (data && data.id) {
+          setMovie(data)
         }
       })
       .catch(() => setError('Failed to load movie'))
