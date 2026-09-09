@@ -1,10 +1,5 @@
-let TorrentSearchApi
-try {
-  TorrentSearchApi = (await import('torrent-search-api')).default
-  TorrentSearchApi.enableProvider('1337x')
-} catch (e) {
-  console.error('Failed to load torrent-search-api:', e)
-}
+const APIBAY_URL = 'https://apibay.org/q.php'
+const APIBAY_INFO_URL = 'https://apibay.org/t.php'
 
 export default async function handler(req, res) {
   const { q } = req.query
@@ -21,38 +16,62 @@ export default async function handler(req, res) {
     return res.status(200).end()
   }
 
-  if (!TorrentSearchApi) {
-    return res.status(500).json({ error: 'Torrent search not available' })
-  }
-
   try {
-    const torrents = await TorrentSearchApi.search(q, 'Movies', 10)
+    const searchRes = await fetch(`${APIBAY_URL}?q=${encodeURIComponent(q)}`)
 
-    const results = torrents.map(t => ({
-      title: t.title,
-      size: t.size,
-      seeds: t.seeds || 0,
-      leeches: t.leeches || 0,
-      magnet: null,
-      url: t.link || t.torrent || '',
-      provider: t.provider || '1337x'
-    }))
-
-    // Try to get magnet links
-    for (let i = 0; i < results.length && i < 5; i++) {
-      try {
-        if (results[i].url) {
-          const magnet = await TorrentSearchApi.getMagnet({ link: results[i].url })
-          results[i].magnet = magnet
-        }
-      } catch (e) {
-        // Skip magnet if it fails
-      }
+    if (!searchRes.ok) {
+      return res.status(502).json({ error: 'Failed to fetch from apibay', status: searchRes.status })
     }
+
+    const data = await searchRes.json()
+
+    if (!Array.isArray(data)) {
+      return res.status(200).json({ results: [] })
+    }
+
+    const movieCategories = new Set(['207', '209', '211', '212', '213'])
+
+    const results = data
+      .filter(t => t.id !== '0' && movieCategories.has(t.category))
+      .sort((a, b) => parseInt(b.seeders) - parseInt(a.seeders))
+      .slice(0, 15)
+      .map(t => {
+        const name = t.name || ''
+        const infoHash = t.info_hash || ''
+        const sizeBytes = parseInt(t.size) || 0
+        const size = formatSize(sizeBytes)
+        const seeds = parseInt(t.seeders) || 0
+        const leeches = parseInt(t.leechers) || 0
+
+        const magnet = `magnet:?xt=urn:btih:${infoHash}&dn=${encodeURIComponent(name)}`
+        const torrentUrl = `https://apibay.org/t.php?id=${t.id}`
+
+        return {
+          title: name,
+          size,
+          seeds,
+          leeches,
+          magnet,
+          url: torrentUrl,
+          provider: 'apibay'
+        }
+      })
 
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate')
     return res.status(200).json({ results })
   } catch (err) {
     return res.status(500).json({ error: 'Failed to search torrents', details: err.message })
   }
+}
+
+function formatSize(bytes) {
+  if (!bytes || bytes === 0) return 'Unknown'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let i = 0
+  let size = bytes
+  while (size >= 1024 && i < units.length - 1) {
+    size /= 1024
+    i++
+  }
+  return `${size.toFixed(2)} ${units[i]}`
 }
