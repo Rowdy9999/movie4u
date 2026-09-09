@@ -17,7 +17,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    const searchRes = await fetch(`${APIBAY_URL}?q=${encodeURIComponent(q)}`)
+    const searchRes = await fetch(`${APIBAY_URL}?q=${encodeURIComponent(q)}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://apibay.org/',
+        'Accept': 'application/json'
+      }
+    })
 
     if (!searchRes.ok) {
       return res.status(502).json({ error: 'Failed to fetch from apibay', status: searchRes.status })
