@@ -18,7 +18,7 @@ export default function WatchPage({ movieId, onNavigate }) {
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/movie/${movieId}`)
+    fetch(`/api/movie?id=${movieId}`)
       .then(r => r.json())
       .then(data => {
         if (data && data.id) {
