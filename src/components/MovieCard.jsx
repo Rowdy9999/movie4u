@@ -1,48 +1,24 @@
-import { useState } from 'react'
-
-export default function MovieCard({ movie }) {
-  const [copied, setCopied] = useState(false)
-
-  const name = movie.name || movie.title || 'Unknown'
-  const size = movie.size || ''
-  const seeders = movie.seeders || movie.seeds || 0
-  const leechers = movie.leechers || movie.leech || 0
-  const magnet = movie.magnet || movie.magnetLink || ''
-  const id = movie.id || ''
-
-  async function handleCopy() {
-    if (!magnet) return
-    try {
-      await navigator.clipboard.writeText(magnet)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      const ta = document.createElement('textarea')
-      ta.value = magnet
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }
-  }
+export default function MovieCard({ movie, genres, onWatch }) {
+  const title = movie.title || 'Unknown'
+  const year = movie.release_date ? movie.release_date.split('-')[0] : ''
+  const rating = movie.vote_average || 0
+  const poster = movie.poster_path || ''
 
   return (
-    <div className="movie-card">
-      <div className="movie-info" style={{width: '100%'}}>
-        <div className="movie-title">{name}</div>
+    <div className="movie-card" onClick={onWatch}>
+      {poster ? (
+        <img src={poster} alt={title} className="movie-poster" loading="lazy" />
+      ) : (
+        <div className="movie-poster-placeholder">🎬</div>
+      )}
+      <div className="movie-info">
+        <div className="movie-title">{title}</div>
         <div className="movie-meta">
-          {size && <span className="movie-badge">{size}</span>}
-          {seeders > 0 && <span className="movie-badge seeds">Seeders: {seeders}</span>}
-          {leechers > 0 && <span className="movie-badge leech">Leechers: {leechers}</span>}
+          {rating > 0 && <span className="movie-badge rating">⭐ {rating.toFixed(1)}</span>}
+          {year && <span className="movie-badge year">{year}</span>}
         </div>
-        <button
-          className={`copy-btn ${copied ? 'copied' : ''}`}
-          onClick={handleCopy}
-          disabled={!magnet}
-        >
-          {copied ? '✓ Magnet Copied!' : 'Copy Magnet Link'}
+        <button className="watch-btn" onClick={(e) => { e.stopPropagation(); onWatch() }}>
+          ▶ Watch
         </button>
       </div>
     </div>

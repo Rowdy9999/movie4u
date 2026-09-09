@@ -1,12 +1,6 @@
 const TMDB_KEY = '5a6e0b386f2594eaef66408b19e50657'
 
 export default async function handler(req, res) {
-  const { q, page = 1 } = req.query
-
-  if (!q) {
-    return res.status(400).json({ error: 'Query parameter "q" is required' })
-  }
-
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
@@ -16,14 +10,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const params = new URLSearchParams({
-      api_key: TMDB_KEY,
-      query: q,
-      page: String(page),
-      include_adult: 'false'
-    })
-
-    const tmdbRes = await fetch(`https://api.themoviedb.org/3/search/movie?${params}`)
+    const tmdbRes = await fetch(
+      `https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_KEY}`
+    )
 
     if (!tmdbRes.ok) {
       return res.status(502).json({ error: 'TMDB API error' })
@@ -44,9 +33,9 @@ export default async function handler(req, res) {
       genre_ids: m.genre_ids
     }))
 
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate')
-    return res.status(200).json({ results: movies, total_results: data.total_results })
+    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate')
+    return res.status(200).json({ results: movies })
   } catch (err) {
-    return res.status(500).json({ error: 'Failed to search movies', details: err.message })
+    return res.status(500).json({ error: 'Failed to fetch trending', details: err.message })
   }
 }

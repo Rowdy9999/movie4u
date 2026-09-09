@@ -1,101 +1,57 @@
-import { useState } from 'react'
-import SearchForm from './components/SearchForm'
-import Results from './components/Results'
+import { useState, useEffect } from 'react'
+import HomePage from './pages/HomePage'
+import SearchResults from './pages/SearchResults'
+import WatchPage from './pages/WatchPage'
 
-const API_BASE = '/api/search'
+function getRoute() {
+  const hash = window.location.hash.slice(1) || '/'
+  if (hash.startsWith('/watch/')) {
+    const id = hash.split('/watch/')[1]
+    return { page: 'watch', param: id }
+  }
+  if (hash.startsWith('/search')) {
+    const params = new URLSearchParams(hash.split('?')[1] || '')
+    return { page: 'search', param: params.get('q') || '' }
+  }
+  return { page: 'home', param: '' }
+}
 
 export default function App() {
-  const [results, setResults] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [searched, setSearched] = useState(false)
-  const [query, setQuery] = useState('')
+  const [route, setRoute] = useState(getRoute)
 
-  async function handleSearch(name, year) {
-    if (!name.trim()) return
-    setLoading(true)
-    setError('')
-    setResults([])
-    setSearched(true)
-    setQuery(`${name}${year ? ' ' + year : ''}`)
-
-    try {
-      const res = await fetch(`${API_BASE}?q=${encodeURIComponent(`${name} ${year}`.trim())}`)
-      const data = await res.json()
-
-      let movies = []
-      if (Array.isArray(data)) {
-        movies = data
-      } else if (data && Array.isArray(data.data)) {
-        movies = data.data
-      } else if (data && data.results && Array.isArray(data.results)) {
-        movies = data.results
-      }
-
-      if (movies.length > 0) {
-        setResults(movies)
-      } else {
-        setError('No results found. Try a different search.')
-      }
-    } catch (err) {
-      setError('Something went wrong. Please try again.')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    function onHashChange() {
+      setRoute(getRoute())
     }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  function navigate(page, param) {
+    if (page === 'home') window.location.hash = '/'
+    else if (page === 'search') window.location.hash = `/search?q=${encodeURIComponent(param)}`
+    else if (page === 'watch') window.location.hash = `/watch/${param}`
   }
 
   return (
-    <div>
+    <div className="app">
       <header className="header">
-        <div className="logo">Movie<span>4u</span></div>
+        <div className="logo" onClick={() => navigate('home')} style={{ cursor: 'pointer' }}>
+          Movie<span>4u</span>
+        </div>
       </header>
 
-      <section className="hero">
-        <h1>Find & Download Movies</h1>
-        <p>Search for any movie and get torrent download links</p>
-      </section>
-
-      <div className="search-container">
-        <SearchForm onSearch={handleSearch} loading={loading} />
-      </div>
-
-      {loading && (
-        <div className="loading">
-          <div className="spinner"></div>
-          <div className="loading-text">Searching movies...</div>
-        </div>
-      )}
-
-      {error && !loading && (
-        <div className="empty">
-          <div className="empty-icon">🎬</div>
-          <h3>{error}</h3>
-        </div>
-      )}
-
-      {!loading && !error && results.length > 0 && (
-        <Results results={results} query={query} />
-      )}
-
-      {!loading && !error && searched && results.length === 0 && (
-        <div className="empty">
-          <div className="empty-icon">🔍</div>
-          <h3>No results found</h3>
-          <p>Try searching with different keywords</p>
-        </div>
-      )}
-
-      {!searched && (
-        <div className="empty">
-          <div className="empty-icon">🎬</div>
-          <h3>Start searching</h3>
-          <p>Enter a movie name to find torrent download links</p>
-        </div>
-      )}
-
-      <footer className="footer">
-        Movie4u — Free movie torrent search engine
-      </footer>
+      <main className="main">
+        {route.page === 'home' && (
+          <HomePage onNavigate={navigate} />
+        )}
+        {route.page === 'search' && route.param && (
+          <SearchResults query={route.param} onNavigate={navigate} />
+        )}
+        {route.page === 'watch' && route.param && (
+          <WatchPage movieId={route.param} onNavigate={navigate} />
+        )}
+      </main>
     </div>
   )
 }
